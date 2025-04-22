@@ -1,12 +1,17 @@
 # Offline Notes App - Interview Task
 
-## 1. How to Run the App
+## Description
+This is a take home assignment for interview candidates. 
+Read this file carefully and implement the [tasks](#your-tasks) mentioned below. 
+Check the [Deliverables](#Deliverables) section for what to submit.
+
+## How to Run the App
 
 This application is built using Next.js.
 
 1.  **Clone/Fork:**
     ```bash
-    git clone https://github.com/ksajalk1/offline-notes-test
+    git clone https://github.com/interview177/offline-notes-test
     cd offline-notes-test
     ```
 2.  **Install Dependencies:**
@@ -23,7 +28,7 @@ This application is built using Next.js.
     ```
     Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 2. Current Architecture
+## Current Architecture
 
 This is a note-taking application designed to work offline first.
 
@@ -73,7 +78,7 @@ graph LR
     ServerAPI -- Needs Implementation --> DS
 ```
 
-## 3. Your Tasks
+## Your Tasks
 
 Your goal is to enhance this application by implementing the backend data store and adding new features. Create a fork of this repository and implement the following tasks on your fork.
 
@@ -103,7 +108,7 @@ Your goal is to enhance this application by implementing the backend data store 
 5. **UI Cleanup:**
     -   The current UI is very basic. Improve the visual presentation and user experience. You are encouraged to use **Tailwind CSS** (it's already installed) for styling, but you can also continue using styled-components if preferred. Make it look more polished.
 
-**Deliverables:**
+## Deliverables:
 
 1.  A link to your Git repository (your fork) containing your completed implementation.
 2.  **Crucially:** Update *this* `README.md` file in your repository to include:
