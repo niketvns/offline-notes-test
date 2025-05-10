@@ -115,41 +115,75 @@ graph LR
 
 ## Note and Tag Data Structure
 
-**Note Example:**
+The core note data structure is defined in `src/interfaces/global.interface.ts` as follows:
 
-```js
-{
-  title: 'Hello bro!',
-  localId: '6b1fc83f-e545-4fef-b72b-2ed00d67fdea',
-  createdAt: 'Sat May 10 2025 11:41:23 GMT+0530 (India Standard Time)',
-  tags: [
-    { value: 'work', label: 'Work', color: '#0052CC' }
-  ],
-  _id: '681eee0b0162ab2ef13c2838'
+```ts
+export interface INote {
+  _id?: string; // Used by datastore
+  localId?: string; // Unique local identifier (UUID)
+  localDeleteSynced?: boolean; // Marks if a local delete has been synced to server
+  localEditSynced?: boolean; // Marks if a local edit has been synced to server
+  tags?: SelectOption[]; // Array of tag objects
+  title: string; // Note title/content
+  createdAt: Date; // Creation timestamp
+  updatedAt?: Date; // Last update timestamp (used for conflict detection)
 }
 ```
 
-- `createdAt` is stored as a string (date-time).
-- `tags` is an array of tag objects.
+- `createdAt` and `updatedAt` are JavaScript `Date` objects (may be serialized as strings for storage).
+- `tags` is an array of tag objects, each with `{ value, label, color }`.
+- `_id` is the server-side (MongoDB) identifier; `localId` is a UUID for offline/IndexedDB use.
+- `localDeleteSynced` and `localEditSynced` are booleans used to track sync status for deletes/edits.
 
-**Pros:**
+**Example Note:**
 
-- Flexible, easy to extend with more fields.
-- Tag objects allow for color-coding and display customization.
-
-**Cons:**
-
-- Slightly more complex than simple string tags, but much more powerful for UI/UX.
+```js
+{
+  title: 'New Note',
+  localId: '6b1fc83f-e545-4fef-b72b-2ed00d67fdea',
+  createdAt: '2025-05-10T06:11:23.000Z',
+  updatedAt: '2025-05-10T07:00:00.000Z',
+  tags: [
+    { value: 'work', label: 'Work', color: '#0052CC' }
+  ],
+  _id: '681eee0b0162ab2ef13c2838',
+  localEditSynced: false
+}
+```
 
 ## Conflict Detection and Resolution
 
-- **Detection:**
-  - In `src/utils/notes.ts`, the `refreshNotes` function compares local and server versions of notes.
-  - A conflict is detected if a note has been modified both locally (while offline) and on the server since the last sync (e.g., different title, content, or tags).
-  - Detected conflicts are logged for now.
-- **Proposed Resolution Strategy:**
-  - Present the user with both versions and allow them to choose which to keep, or to merge changes manually.
-  - Could use a modal dialog showing differences and merge options in the future.
+### Conflict Detection Logic
+
+Conflict detection is implemented in `src/utils/notes.ts` within the `refreshNotes` function. The logic works as follows:
+
+- When the app comes online, it fetches both local notes (from IndexedDB) and server notes (from the backend).
+- For each note that has been edited locally while offline (`localEditSynced === false`), it checks if a corresponding note exists on the server (matched by `_id`).
+- **A conflict is detected if:**
+  - Both the local and server note have an `updatedAt` timestamp.
+  - The local note's `updatedAt` is **older** than the server note's `updatedAt` (i.e., the server note was updated after the local edit began).
+  - The note content differs (title or tags are different).
+- When a conflict is detected, a warning is logged to the console with both versions of the note. (You could extend this to trigger a UI for user resolution.)
+
+**Conflict Detection Example:**
+
+```js
+const isConflict =
+  localNote.updatedAt &&
+  matchingServerNote.updatedAt &&
+  new Date(localNote.updatedAt).getTime() <
+    new Date(matchingServerNote.updatedAt).getTime() &&
+  (localNote.title !== matchingServerNote.title ||
+    JSON.stringify(localNote.tags) !== JSON.stringify(matchingServerNote.tags));
+```
+
+If `isConflict` is true, the app logs a warning and could store conflict info for later resolution.
+
+### Proposed Conflict Resolution Strategy
+
+- Present the user with both the local and server versions of the note.
+- Allow the user to choose which version to keep, or to manually merge changes (e.g., via a modal dialog showing differences).
+- Optionally, provide an automatic merge if only non-overlapping fields are changed.
 
 ## Summary of Changes / What I Did
 

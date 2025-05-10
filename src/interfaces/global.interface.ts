@@ -12,4 +12,5 @@ export interface INote {
   tags?: SelectOption[];
   title: string;
   createdAt: Date;
+  updatedAt?: Date; // Add this for conflict detection
 }

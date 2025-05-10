@@ -224,6 +224,35 @@ export async function refreshNotes() {
               error
             );
           }
+        } else if (localNote.localEditSynced === false && localNote._id) {
+          // Conflict detection: note was edited locally and also exists on server
+          const matchingServerNote = serverNotes.find(
+            (serverNote: INote) => serverNote._id === localNote._id
+          );
+
+          console.log("localNote: ", localNote);
+          console.log("matchingServerNote: ", matchingServerNote);
+
+          if (matchingServerNote) {
+            // Check for conflict: updatedAt or content/tags differ
+            const isConflict =
+              localNote.updatedAt &&
+              matchingServerNote.updatedAt &&
+              new Date(localNote.updatedAt).getTime() <
+                new Date(matchingServerNote.updatedAt).getTime() &&
+              (localNote.title !== matchingServerNote.title ||
+                JSON.stringify(localNote.tags) !==
+                  JSON.stringify(matchingServerNote.tags));
+            if (isConflict) {
+              console.warn(
+                `Conflict detected for note _id=${localNote._id}:\nLocal:`,
+                localNote,
+                "\nServer:",
+                matchingServerNote
+              );
+              // Here you could trigger a UI or store conflict info for later resolution
+            }
+          }
         }
       }
 
