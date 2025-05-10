@@ -1,5 +1,5 @@
-import NoteList from '../components/NoteList';
-import { useEffect } from 'react';
+import { AppContextProvider } from "@/store/appContext";
+import NoteList from "../components/NoteList";
 
 interface SyncManager {
   getTags(): Promise<string[]>;
@@ -23,8 +23,10 @@ declare global {
 
 export default function Home() {
   return (
-    <div>
-      <NoteList />
-    </div>
+    <AppContextProvider>
+      <div>
+        <NoteList />
+      </div>
+    </AppContextProvider>
   );
 }

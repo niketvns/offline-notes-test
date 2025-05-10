@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
-import SyncIndicator from './SyncIndicator'
-import { Note } from '../utils/notes'
-import { Button } from '../styles/styled';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-
-const NoteItemWrapper = styled.div`
-  margin-bottom: 1rem;
-`;
+import React, { useEffect, useRef, useState } from "react";
+import styled from "styled-components";
+import SyncIndicator from "./SyncIndicator";
+import { Button } from "../styles/styled";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faExclamationCircle,
+  faRemove,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
+import { INote, SelectOption } from "@/interfaces/global.interface";
+import EditNote from "./EditNote";
 
 const NoteFrame = styled.li<{ isSubmitted?: boolean }>`
   position: relative;
@@ -22,10 +23,10 @@ const NoteFrame = styled.li<{ isSubmitted?: boolean }>`
   margin-bottom: 0.25rem;
   max-height: 150px;
   overflow-y: auto;
-  width: 500px;
+  width: 100%;
   word-wrap: break-word;
   overflow: visible;
-  background-color: ${props => (!props.isSubmitted ? '#eee' : 'transparent')};
+  background-color: ${(props) => (!props.isSubmitted ? "#eee" : "transparent")};
 
   .note-timestamp {
     position: absolute;
@@ -67,27 +68,6 @@ const NoteFrame = styled.li<{ isSubmitted?: boolean }>`
     height: auto;
     min-height: 0rem;
   }
-`;
-
-const Content = styled.div`
-  flex-grow: 1;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  overflow-y: auto;
-  max-width: 100%;
-  margin-bottom: 1rem;
-  padding-bottom: 0.25rem;
-`;
-
-const SaveButton = styled(Button)`
-  padding: 5px 10px;
-  font-size: 0.8rem;
-`;
-
-const CancelButton = styled(Button)`
-  padding: 5px 10px;
-  font-size: 0.8rem;
 `;
 
 const DeleteButton = styled.button`
@@ -140,15 +120,22 @@ const OfflineIndicatorText = styled.span`
 `;
 
 interface NoteItemProps {
-  note: Note,
+  note: INote;
   onDeleteNote: (noteId: string) => Promise<void>;
-  onEditNote: (noteId: string, updatedTitle: string) => Promise<void>;
+  onEditNote: (
+    noteId: string,
+    updatedTitle: string,
+    updatedTags?: SelectOption[]
+  ) => Promise<void>;
 }
 
-const NoteItem: React.FC<NoteItemProps> = ({ note, onDeleteNote, onEditNote }) => {
+const NoteItem: React.FC<NoteItemProps> = ({
+  note,
+  onDeleteNote,
+  onEditNote,
+}) => {
   const [isSyncing, setSyncing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(note.title);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleDelete = async () => {
@@ -161,7 +148,7 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, onDeleteNote, onEditNote }) =
         await onDeleteNote(note.localId);
       }
     } catch (error) {
-      console.error('Error deleting note:', error);
+      console.error("Error deleting note:", error);
     } finally {
       // Set syncing state back to false after the request is complete
       setSyncing(false);
@@ -170,81 +157,89 @@ const NoteItem: React.FC<NoteItemProps> = ({ note, onDeleteNote, onEditNote }) =
 
   const handleEdit = () => {
     setIsEditing(true);
-    setTitle(note.title);
-  };
-
-  const handleSave = async () => {
-    if (note.localId !== undefined) {
-      setSyncing(true);
-      await onEditNote(note.localId, title);
-      setSyncing(false);
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setTitle(note.title);
   };
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
       textareaRef.current.value = note.title;
     }
-  }, [isEditing, title]);
+  }, [isEditing, note.title]);
 
   return (
-    <NoteItemWrapper>
-      <NoteFrame isSubmitted={note._id !== undefined}>
-        {isSyncing && <SyncIndicator/>}
-        <DeleteButton onClick={handleDelete}>[x]</DeleteButton>
-        <p className="note-timestamp">{new Date(note.createdAt).toUTCString()}</p>
-        <div className="note-content">
-          {isEditing ? (
-            <textarea
-              ref={textareaRef}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
+    <>
+      <div className="mb-4">
+        <NoteFrame isSubmitted={note._id !== undefined}>
+          {isSyncing && <SyncIndicator />}
+          <DeleteButton onClick={handleDelete}>
+            <FontAwesomeIcon
+              icon={faTrash}
+              className="text-red-600 hover:bg-gray-300 p-2 rounded-full"
             />
-          ) : (
-            <Content>{note.title}</Content>
-          )}
-        </div>
-        {isEditing ? (
-          <div className="edit-buttons">
-            <SaveButton onClick={handleSave}>Save</SaveButton>
-            <CancelButton onClick={handleCancel}>Cancel</CancelButton>
+          </DeleteButton>
+          <p className="note-timestamp">
+            {new Date(note.createdAt).toUTCString()}
+          </p>
+          <div className="note-content">
+            <div className="flex-grow break-words word-break-all overflow-y-auto flex flex-col gap-2 items-stretch self-center w-full max-w-full mb-4 pb-1">
+              <p>{note.title}</p>
+              <div className="flex flex-row gap-2 items-center self-center w-full">
+                {note.tags?.map((tag) => (
+                  <div
+                    key={tag.value}
+                    className="text-sm text-white border rounded-full px-2 py-0.5 bg-red-300 select-none flex gap-1 items-center"
+                    style={{
+                      backgroundColor: tag.color,
+                    }}
+                  >
+                    {tag.label}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ) : (
           <EditButton onClick={handleEdit}>Edit</EditButton>
+        </NoteFrame>
+        {(note.localDeleteSynced === false ||
+          note.localEditSynced === false ||
+          note._id === undefined) && (
+          <OfflineIndicatorWrapper>
+            {note.localDeleteSynced === false && (
+              <OfflineIndicator>
+                <OfflineIndicatorIcon icon={faExclamationCircle} />
+                <OfflineIndicatorText>
+                  Note deletion not synced
+                </OfflineIndicatorText>
+              </OfflineIndicator>
+            )}
+            {note.localEditSynced === false && (
+              <OfflineIndicator>
+                <OfflineIndicatorIcon icon={faExclamationCircle} />
+                <OfflineIndicatorText>
+                  Note edit not synced
+                </OfflineIndicatorText>
+              </OfflineIndicator>
+            )}
+            {note._id === undefined && (
+              <OfflineIndicator>
+                <OfflineIndicatorIcon icon={faExclamationCircle} />
+                <OfflineIndicatorText>
+                  Note submission not synced
+                </OfflineIndicatorText>
+              </OfflineIndicator>
+            )}
+          </OfflineIndicatorWrapper>
         )}
-      </NoteFrame>
-      {(note.localDeleteSynced === false || note.localEditSynced === false || note._id === undefined) && (
-        <OfflineIndicatorWrapper>
-          {note.localDeleteSynced === false && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note deletion not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-          {note.localEditSynced === false && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note edit not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-          {note._id === undefined && (
-            <OfflineIndicator>
-              <OfflineIndicatorIcon icon={faExclamationCircle} />
-              <OfflineIndicatorText>Note submission not synced</OfflineIndicatorText>
-            </OfflineIndicator>
-          )}
-        </OfflineIndicatorWrapper>
+      </div>
+      {isEditing && (
+        <EditNote
+          note={note}
+          closeEditNote={() => setIsEditing(false)}
+          onEditNote={onEditNote}
+        />
       )}
-    </NoteItemWrapper>
+    </>
   );
 };
 
