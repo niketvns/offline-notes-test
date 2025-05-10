@@ -20,6 +20,16 @@ const AddNoteButton = styled(Button)`
   font-size: 1rem;
 `;
 
+const CloseButton = styled(Button)`
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #ff0000ba;
+  &:hover {
+    background-color: #ff0000e6;
+  }
+`;
+
 interface NoteFormProps {
   onNoteSubmit: (noteTitle: string, noteTags: SelectOption[]) => Promise<void>;
 }
@@ -30,6 +40,7 @@ const NoteForm: React.FC<NoteFormProps> = ({ onNoteSubmit }) => {
   const [noteTags, setNoteTags] = useState<SelectOption[]>([]);
   const { handleSelectedTags } = useAppContext();
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleNoteTitleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setNoteTitle(event.target.value);
@@ -53,19 +64,29 @@ const NoteForm: React.FC<NoteFormProps> = ({ onNoteSubmit }) => {
     setNoteTags([]);
     handleSelectedTags(["all"]);
     setError(null);
+    setIsEditing(false);
   };
 
   const handleTagChange = (tags: MultiValue<SelectOption>) => {
     setNoteTags((prevTags) => [...tags]);
   };
 
+  const handleClose = () => {
+    setIsEditing(false);
+    setNoteTitle("");
+    setNoteTags([]);
+    handleSelectedTags(["all"]);
+    setError(null);
+  };
+
   return (
     <form
-      className="flex flex-col gap-2 items-stretch self-center w-full max-w-md"
+      className="flex flex-col gap-1 items-stretch self-center w-full max-w-md"
       onSubmit={handleSubmit}
     >
-      <div>
+      <>
         <textarea
+          onFocus={() => setIsEditing(true)}
           className={`h-24 w-full resize-vertical mr-4 p-4 border border-gray-300 rounded-md text-md flex-grow outline-blue-500 ${
             error && "border-red-500 outline-red-500"
           }`}
@@ -84,20 +105,27 @@ const NoteForm: React.FC<NoteFormProps> = ({ onNoteSubmit }) => {
             {error}
           </p>
         )}
-      </div>
-      <Select
-        isMulti
-        name="colors"
-        options={selectOptions}
-        className="basic-multi-select"
-        classNamePrefix="select"
-        onChange={handleTagChange}
-        value={noteTags}
-        placeholder="Select tags..."
-      />
-      <AddNoteButton type="submit">
-        {isSyncing ? <LoadingSpinner /> : "Add Note"}
-      </AddNoteButton>
+      </>
+      {isEditing && (
+        <>
+          <Select
+            isMulti
+            name="colors"
+            options={selectOptions}
+            className="basic-multi-select"
+            classNamePrefix="select"
+            onChange={handleTagChange}
+            value={noteTags}
+            placeholder="Select tags..."
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <CloseButton onClick={handleClose}>Close</CloseButton>
+            <AddNoteButton type="submit">
+              {isSyncing ? <LoadingSpinner /> : "Add Note"}
+            </AddNoteButton>
+          </div>
+        </>
+      )}
     </form>
   );
 };

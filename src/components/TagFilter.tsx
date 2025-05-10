@@ -27,7 +27,7 @@ const TagFilter: React.FC = () => {
       <b className="text-sm md:text-lg">Filter: </b>
       <label
         htmlFor="all"
-        className="flex gap-2 items-center text-sm md:text-lg px-4 py-1 bg-gray-200 rounded-full cursor-pointer select-none"
+        className="flex gap-2 items-center text-sm md:text-base xl:text-lg px-4 py-1 bg-gray-200 rounded-full cursor-pointer select-none"
       >
         <input
           type="checkbox"
@@ -43,7 +43,7 @@ const TagFilter: React.FC = () => {
         <div key={option.value}>
           <label
             htmlFor={option.value}
-            className="flex gap-2 items-center text-sm md:text-lg px-4 py-1 bg-gray-200 rounded-full cursor-pointer select-none"
+            className="flex gap-2 items-center text-sm md:text-base xl:text-lg px-4 py-1 bg-gray-200 rounded-full cursor-pointer select-none"
           >
             <input
               type="checkbox"
